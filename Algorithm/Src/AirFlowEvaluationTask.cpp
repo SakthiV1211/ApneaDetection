@@ -105,13 +105,8 @@ void airFlowEvaluationTask::EliminateDcOffset(void)
   }
   if (std::abs(meanDifference) > 5.0)
   {
-    blockNegativePeakAppend = true;
     peaksForApneaDetection.apneaDetectionObj.InitiatePcLeakageTune(
         meanDifference);
-  }
-  else
-  {
-    blockNegativePeakAppend = false;
   }
   for (uint16_t index = static_cast<uint16_t>(SAMPLING_RATE * 5U);
        index < static_cast<uint16_t>(SAMPLING_RATE * 15U); index++)
@@ -188,8 +183,7 @@ void airFlowEvaluationTask::DetectPeaksInfo(void)
                      .RoundUpMethod(sgFilterData, 3U)
               << std::endl;
   }
-  peaksForApneaDetection.ProcessPeakData(deriveSignalWave,
-                                         blockNegativePeakAppend);
+  peaksForApneaDetection.ProcessPeakData(deriveSignalWave);
 }
 
 //! @brief The function shall receive the flow data from the queue and store the
@@ -247,7 +241,6 @@ waveform airFlowEvaluationTask::PowerSpectra(void)
 void airFlowEvaluationTask::ResetAFETaskVariable(void)
 {
   cmfLeakRate = 0.0;
-  blockNegativePeakAppend = false;
   occupiedPackets = 0U;
   oneMinCounter = 0U;
   incrementCounter = 0U;

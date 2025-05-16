@@ -25,7 +25,6 @@ private:
   uint16_t packetTimeSize;
   uint16_t differenceCount;
   double bwp;
-  negativeInfoContainer negativeElements;
   pcInfoContainer pcInfoObj;
   thersholdContainer thresholdLevel;
   window frame;
@@ -70,7 +69,6 @@ private:
   void AllowDataToBaseWindow(void);
   void AddPeakDataCheck(const double, const waveform);
   double GetPeakShiftData(const double, const waveform);
-  void BaseNormalizeRefWin(void);
   void RearrangePcArray(const uint16_t);
 
 public:
@@ -79,12 +77,9 @@ public:
 
   void FindOutAH(const std::pair<uint16_t, double>, const waveform);
   void ResetAhiValues();
-  void AppendNegPeak(const double);
-  void NegativePeakAverage(void);
   void CentralApneaTrigMsg(void);
   void EventTrigMsg(void);
   void InitiatePcLeakageTune(const double);
-  void EndFrameCheck(void);
   void PrintWaveform(const waveform printWave);
 };
 

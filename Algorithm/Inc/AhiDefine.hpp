@@ -50,13 +50,6 @@ namespace ahiDefineBound
 
   constexpr uint16_t WINDOW_SHIFT_IN_SECS{1U};
 
-  enum class negativePeakState : uint8_t
-  {
-    start_append,
-    stop_append,
-    wait_append
-  };
-
   enum class ahiFrame : uint8_t
   {
     fill_up,
@@ -109,14 +102,5 @@ namespace ahiDefineBound
     std::array<double, 2U> pcLimRange;
   };
 
-  struct negativeInfoContainer
-  {
-    bool isNegPeakFrameFull;
-    negativePeakState negCheckState;
-    uint16_t negSettleCounter;
-    double negativePeakAvg;
-    std::array<double, 20U> negativeSortedArray;
-    framePacket<double, 20U> negativePeaksArray;
-  };
 }; // namespace ahiDefineBound
 #endif

@@ -24,7 +24,6 @@ apneaDetection::apneaDetection()
     : centralApneaDetected{false}, isReferenceComplete{false},
       addOnCutOffCount{0u}, autoTunePcCount{0U}, packetTimeSize{0U},
       differenceCount{0U}, bwp{0.0},
-      negativeElements{false, negativePeakState::start_append, 0U, 0.0, {0.0}, {}},
       pcInfoObj{0.0, 0.0}, thresholdLevel{0.0}, frame{{0U}, {0U}, {0U}},
       peaksCountInfo{0U, 0U, 0U, {0U}},
       pcTestInfo{pcState::check_pc_surpassed_cut_off, 0U, {0.9, 0.7}},
@@ -42,28 +41,6 @@ apneaDetection::apneaDetection()
       &apneaDetection::WaitUntillPcSettle;
 }
 
-//! @brief
-//! @param None.
-//! @retval None.
-
-void apneaDetection::EndFrameCheck(void)
-{
-  // debugFile << epochToHumanReadable(epotchTime +
-  // static_cast<uint16_t>(static_cast<float>(peakIndexTest)/SAMPLING_RATE))
-  //           << " => AppendNegPeak : "
-  //           << static_cast<uint16_t>(negativeElements.negCheckState)
-  //           << std::endl;
-  if (negativeElements.negCheckState == negativePeakState::wait_append)
-  {
-    ++negativeElements.negSettleCounter;
-    if (negativeElements.negSettleCounter >= 2U)
-    {
-      negativeElements.negSettleCounter = 0U;
-      negativeElements.negCheckState = negativePeakState::start_append;
-    }
-  }
-}
-
 //! @brief The function shall be used to initialize the leakage factor for event
 //! detection when leakage is detected during the sampling process.
 //! @param argMeanDiff -> Mean difference between current and previous sample
@@ -74,8 +51,6 @@ void apneaDetection::InitiatePcLeakageTune(const double argMeanDiff)
 {
   if (isReferenceComplete == true)
   {
-    negativeElements.negSettleCounter = 0U;
-    negativeElements.negCheckState = negativePeakState::wait_append;
     // debugFile << epochToHumanReadable(epotchTime +
     // static_cast<uint16_t>(static_cast<float>(peakIndexTest)/SAMPLING_RATE))
     //           << " => *** InitiatePcLeakageTune "
@@ -139,7 +114,6 @@ void apneaDetection::CentralApneaTrigMsg(void) { centralApneaDetected = true; }
 void apneaDetection::EventTrigMsg(void)
 {
   addOnCutOffCount = 2U;
-  negativeElements.negSettleCounter = 0U;
 }
 
 //! @brief The function shall identify the apnea/hypopnea events based on the
@@ -288,7 +262,6 @@ void apneaDetection::PcBufferSegmentCheck(void)
   if ((pcDiffCount > 18U) && (FindMax() < 0.4))
   {
     AllowDataToBaseWindow();
-    negativeElements.negCheckState = negativePeakState::start_append;
   }
   else
   {
@@ -364,8 +337,6 @@ void apneaDetection::AppendPcBuffer(const double pcAppend)
 
 void apneaDetection::AllowDataToBaseWindow(void)
 {
-  negativeElements.negSettleCounter = 0U;
-  negativeElements.negCheckState = negativePeakState::wait_append;
   ShiftWinHandler = &apneaDetection::ShiftPositivePeakWindow;
   pcTestInfo.pcCurrentState = pcState::check_pc_surpassed_cut_off;
 }
@@ -453,7 +424,6 @@ void apneaDetection::AppendFivePCValues(const double argPcData)
   if (pcTestInfo.pcCount >= 6U)
   {
     differenceCount = 0;
-    negativeElements.negCheckState = negativePeakState::stop_append;
     pcTestInfo.pcCurrentState = pcState::append_and_examine_pc_data;
     std::array<double, 6> pcCopy;
     std::copy_n(pcBufferArray.begin(), 6U, pcCopy.begin());
@@ -700,16 +670,9 @@ void apneaDetection::FindOutAH(
 {
   if (packetTimeSize == SAMPLE_WINDOW_SECS)
   {
-    if (negativeElements.isNegPeakFrameFull == true)
-    {
-      DiagnosisPcValues(CalculatePcValue());
-      (this->*ShiftWinHandler)();
-      isReferenceComplete = true;
-    }
-    else
-    {
-      packetTimeSize--;
-    }
+    DiagnosisPcValues(CalculatePcValue());
+    (this->*ShiftWinHandler)();
+    isReferenceComplete = true;
   }
   peaksCountInfo.peaksArray.at(packetTimeSize) = positivePeakInfo.first;
   if (positivePeakInfo.first != 0U)
@@ -731,8 +694,7 @@ void apneaDetection::AddPeakDataCheck(const double argActualPeak,
 {
   if (isReferenceComplete == false)
   {
-    frame.positivePeakWindow.at(peaksCountInfo.countValueIndex) =
-        argActualPeak - negativeElements.negativePeakAvg;
+    frame.positivePeakWindow.at(peaksCountInfo.countValueIndex) = argActualPeak;
     peaksCountInfo.countValueIndex +=
         static_cast<uint32_t>(peaksCountInfo.peaksArray.at(packetTimeSize));
   }
@@ -761,7 +723,7 @@ void apneaDetection::AddPeakDataCheck(const double argActualPeak,
 double apneaDetection::GetPeakShiftData(const double actualPeak,
                                         const waveform argRecWave)
 {
-  double peakShiftData{actualPeak - negativeElements.negativePeakAvg};
+  double peakShiftData{actualPeak};
   if (argRecWave == waveform::other_freq_wave)
   {
     peakShiftData = bwp;
@@ -785,74 +747,9 @@ double apneaDetection::GetPeakShiftData(const double actualPeak,
                    static_cast<uint16_t>(static_cast<float>(peakIndexTest) /
                                          SAMPLING_RATE))
             << " => GetPeakShiftData : "
-            << mathAlgoObj.RoundUpMethod(
-                   (actualPeak - negativeElements.negativePeakAvg), 3)
+            << mathAlgoObj.RoundUpMethod(actualPeak, 3)
             << " , " << peakShiftData << std::endl;
   return peakShiftData;
-}
-
-//! @brief The function shall then subtract the reference frame segment peak
-//! data from the negative average.
-//! @param None.
-//! @retval None.
-
-void apneaDetection::BaseNormalizeRefWin(void)
-{
-  for (uint16_t framePos = 0u; framePos < peaksCountInfo.countValueIndex;
-       framePos++)
-  {
-    frame.positivePeakWindow.at(framePos) -= negativeElements.negativePeakAvg;
-  }
-}
-
-//! @brief The function shall append the negative peaks to the buffer array
-//! and calculate the average when the frame is full. It shall then subtract
-//! the reference frame segment peak data from the negative average, which is
-//! not normalized at the start.
-//! @param argNegPeaks -> Airflow negative peak.
-//! @retval None.
-
-void apneaDetection::AppendNegPeak(const double argNegPeaks)
-{
-  if ((negativeElements.negCheckState == negativePeakState::start_append))
-  {
-    negativeElements.negativePeaksArray.CircularDataAppend(argNegPeaks);
-    if ((negativeElements.negativePeaksArray.frameIndex >= 20U) &&
-        (negativeElements.isNegPeakFrameFull == false))
-    {
-      NegativePeakAverage();
-      BaseNormalizeRefWin();
-      negativeElements.isNegPeakFrameFull = true;
-    }
-  }
-}
-
-//! @brief The function shall calculate the average when the negative frame
-//! packet is full. It shall use samples from index 5 to 10 from the
-//! ascendingly sorted sample set for the calculation.
-//! @param None.
-//! @retval None.
-
-void apneaDetection::NegativePeakAverage(void)
-{
-  if (negativeElements.negativePeaksArray.frameIndex >= 20U)
-  {
-    (void)std::copy_n(negativeElements.negativePeaksArray.dataFrame.begin(),
-                      negativeElements.negativePeaksArray.frameIndex,
-                      negativeElements.negativeSortedArray.begin());
-    std::sort(negativeElements.negativeSortedArray.begin(),
-              negativeElements.negativeSortedArray.begin() +
-                  negativeElements.negativePeaksArray.frameIndex);
-    negativeElements.negativePeakAvg = mathAlgoObj.GetAverage(
-        negativeElements.negativeSortedArray.begin() + 4U, 12U);
-    negativeElements.negativePeakAvg = 0.0;
-    // debugFile << epochToHumanReadable(epotchTime +
-    // static_cast<uint16_t>(static_cast<float>(peakIndexTest)/SAMPLING_RATE))
-    //           << " => Negative_AVG : "
-    //           << mathAlgoObj.RoundUpMethod(negativeElements.negativePeakAvg,
-    //           3)
-    //           << std::endl;
-  }
 }
 
 //! @brief The function shall reset all data members of the apneaDetection
@@ -872,20 +769,12 @@ void apneaDetection::ResetAhiValues(void)
   (void)memset(&peaksCountNum, 0U, sizeof(peaksCountNum));
   (void)memset(&frame, 0U, sizeof(frame));
 
-  negativeElements.negSettleCounter = 0U;
-  negativeElements.negCheckState = negativePeakState::start_append;
-  negativeElements.isNegPeakFrameFull = false;
-  negativeElements.negativePeaksArray.ResetFrameSeg();
-  negativeElements.negativeSortedArray.fill(0U);
-  negativeElements.negativePeakAvg = 0.0;
-
   pcBufferArray.fill(0);
   pcTestInfo.pcCount = 0U;
   pcTestInfo.pcCurrentState = pcState::check_pc_surpassed_cut_off;
 
   ShiftWinHandler = &apneaDetection::ShiftPositivePeakWindow;
 
-  
   if (!outFile.is_open())
   {
     printf("Error opening file \n");

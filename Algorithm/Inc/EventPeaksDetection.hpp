@@ -55,7 +55,6 @@ class eventPeaksDetection
 	bool ConfirmationCheckTime(void);
 	void ReConfirmPeak(void);
 
-	void SendNegativePeaksForPC(void);
 	void GetPeaksInfoForEverySec(void);
 	void TransferPeakValidation(void);
 	void TransferPeakForPcDetection(const uint16_t);
@@ -68,7 +67,7 @@ class eventPeaksDetection
 
 	void ResetEventPeakInfoData(void);
 	void FlowRatePeakDetectionMethod(const double);
-	void ProcessPeakData(const waveform, const bool);
+	void ProcessPeakData(const waveform);
 };
 
 #endif /* INC_EVENTPEAKSDETECTION_HPP_ */

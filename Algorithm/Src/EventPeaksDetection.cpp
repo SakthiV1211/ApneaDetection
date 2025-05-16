@@ -230,39 +230,18 @@ void eventPeaksDetection::ResetEventPeakInfoData(void)
 
 //! @brief The function shall reset all eventPeaksDetection data members.
 //! @param argReceivedWave -> .
-//! @param argBlockNegativePeakAppend -> .
 //! @retval None.
 
-void eventPeaksDetection::ProcessPeakData(const waveform argReceivedWave,
-										  const bool argBlockNegativePeakAppend)
+void eventPeaksDetection::ProcessPeakData(const waveform argReceivedWave)
 {
 	getRecWave = argReceivedWave;
 	GetPeaksInfoForEverySec();
 	peakFrame.frameFull = true;
 	peakIndexFrame.frameFull = true;
-	if ((getRecWave != waveform::other_freq_wave) && (argBlockNegativePeakAppend == false))
-	{
-		SendNegativePeaksForPC();
-		apneaDetectionObj.EndFrameCheck();
-	}
 	valleyFrame.frameFull = true;
 	positionIndex = 0;
 }
 
-//! @brief This function appends the negative peaks and calculates the negative average for
-//! AHI detection.
-//! @param None.
-//! @retval None.
-
-void eventPeaksDetection::SendNegativePeaksForPC(void)
-{
-	const uint16_t totFrameIndex{static_cast<uint16_t>(valleyFrame.frameIndex)};
-	for (uint16_t startIndex = 0; startIndex < totFrameIndex; startIndex++)
-	{
-		apneaDetectionObj.AppendNegPeak(valleyFrame.dataFrame.at(startIndex));
-	}
-	apneaDetectionObj.NegativePeakAverage();
-}
 
 //! @brief The function is designed to extract peak data from the frame packet for every second and
 //! subsequently transfer this data for AHI detection.
