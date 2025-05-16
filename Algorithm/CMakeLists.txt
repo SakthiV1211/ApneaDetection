@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+
+file(GLOB_RECURSE MODULE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Src/*.cpp)
+
+add_library(ALGO_Lib OBJECT ${MODULE_SRC})
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/Complex)
