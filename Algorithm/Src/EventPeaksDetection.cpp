@@ -16,7 +16,7 @@ uint32_t peakIndexBuffer{0U};
 //! @brief The function shall reset all eventPeaksDetection data members.
 //! @param None.
 //! @retval None.
-eventPeaksDetection::eventPeaksDetection() : extendSecs{extendedSecsState::zero_sec}, getRecWave{waveform::sine_wave}, negPeakCount{0U},
+eventPeaksDetection::eventPeaksDetection() : extendSecs{extendedSecsState::zero_sec}, getRecWave{waveform::sine_wave}, 
 											 positionIndex{0U}, peakIndexPosition{0U}, intervalGapAdjCounter{0U},
 											 maxSlopeCounter{static_cast<uint16_t>(static_cast<uint32_t>(SAMPLING_RATE * 3U))},
 											 slopeFactorConst{4}, peakBuffer{0.0}, peakSlopeDiff{0.0},
@@ -214,7 +214,6 @@ void eventPeaksDetection::EventPeaksIntrevalGap(void)
 void eventPeaksDetection::ResetEventPeakInfoData(void)
 {
 	extendSecs = extendedSecsState::zero_sec;
-	negPeakCount = 0U;
 	eventPeakDetectVar.peakToValleyIntrevalGap = 0U;
 	eventPeakDetectVar.algorithmState = detectionAlgorithmState::wait_for_500ms;
 	eventPeakDetectVar.goToNextDetectState = detectState::peak_detect;

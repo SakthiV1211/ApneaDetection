@@ -730,17 +730,9 @@ double apneaDetection::GetPeakShiftData(const double actualPeak,
   }
   else
   {
-    if (peakShiftData < 0.0)
-    {
-      peakShiftData = 0.0;
-    }
-    else if (peakShiftData > (bwp * 1.2))
-    {
-      peakShiftData = bwp * 1.2;
-    }
-    else
-    {
-    }
+    double lowerBound{0.0};
+    double upperBound{bwp * 1.2};
+    peakShiftData = std::clamp(peakShiftData, lowerBound, upperBound);
   }
   debugFile << epochToHumanReadable(
                    epotchTime +

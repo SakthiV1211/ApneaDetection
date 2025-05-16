@@ -25,7 +25,6 @@ class eventPeaksDetection
   private:
 	extendedSecsState extendSecs;
 	waveform getRecWave;
-	uint8_t negPeakCount;
 	uint16_t positionIndex;
 	uint16_t peakIndexPosition;
 	uint16_t intervalGapAdjCounter;
