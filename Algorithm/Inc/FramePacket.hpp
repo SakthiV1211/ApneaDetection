@@ -9,7 +9,6 @@ struct framePacket
 	bool frameFull;
 	uint16_t frameIndex;
 	std::array<typeT, sz> dataFrame;
-
 	mathAlgo mathAlgoObj;
 
 	framePacket() : frameFull{false}, frameIndex{0U}, dataFrame{0U}

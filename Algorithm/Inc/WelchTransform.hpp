@@ -18,6 +18,7 @@ class welchTransform : public fastFourierTransform<lenRealFFT, lenFFT>
 	double freqDx;
 	std::pair<uint16_t, uint16_t> deltaBandIndex;
 	std::array<double, lenRealFFT> welchPeriodogram;
+	
 	void CummulatePowerSpectra(std::array<double, lenRealFFT>& aggregateSpectra,
 							   std::array<double, lenRealFFT>& powerSectra) const;
 	void AveragePowerSpectra(std::array<double, lenRealFFT>& avgPwrSpectra,

@@ -18,7 +18,6 @@ class fastFourierTransform
   private:
 	uint16_t noOfBits;
 	std::array<double, nRealFFT> frequencyBin;
-
 	uint16_t BitReversal(uint16_t, uint16_t) const;
 	void Decimation(std::array<std::complex<double>, nFFT>&,
 					std::array<std::complex<double>, nFFT>&);
